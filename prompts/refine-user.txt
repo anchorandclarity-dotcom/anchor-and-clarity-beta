@@ -1,0 +1,13 @@
+A customer has completed the React & Refine step. Produce the final Sellable Opportunity report as structured JSON.
+
+Reference: {{reference}}
+Customer name: {{customer_name}}
+
+Original directions:
+{{original_directions_as_json}}
+
+Customer reactions:
+{{reactions_as_json}}
+
+Practical constraints:
+{{constraints_as_json}}

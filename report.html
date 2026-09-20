@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Your Report — Anchor &amp; Clarity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="shell" id="app"></div>
+
+<script>
+// NOTE ON THE PASSCODE BELOW:
+// This is a convenience gate only, so the "Send to customer" button
+// isn't sitting there enabled by default. It is NOT real security \u2014
+// anyone who opens the browser console could still call
+// /.netlify/functions/send-report directly with recipient: "customer".
+// For genuine protection, send-report.js itself would need a server-side
+// check (e.g. a one-time approval token). Worth upgrading before this
+// goes fully live with paying customers.
+const REVIEWER_PASSCODE = '!Dreamline12';
+
+function escapeHtml(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderError(message){
+  document.getElementById('app').innerHTML = `
+    <span class="tab mono">CASE FILE \u00b7 ERROR</span>
+    <div class="error-box">
+      <h2>Something went wrong</h2>
+      <p>${escapeHtml(message || 'We could not generate your report. No charge has been made for this attempt.')}</p>
+      <div style="margin-top:16px;">
+        <a class="btn btn-primary" href="/discover.html">Try again</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderNoReport(){
+  document.getElementById('app').innerHTML = `
+    <span class="tab mono">CASE FILE \u00b7 NOT FOUND</span>
+    <div class="error-box">
+      <h2>No report found</h2>
+      <p>We couldn't find a report to show. Please start from the beginning.</p>
+      <div style="margin-top:16px;">
+        <a class="btn btn-primary" href="/discover.html">Start Discovery</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderDraft(report){
+  const directions = (report.section_3_directions || []).map(d => `
+    <div class="direction-card">
+      <h3>${escapeHtml(d.name)}</h3>
+      <p>${escapeHtml(d.what_it_is)}</p>
+      <p><strong>Why it fits:</strong> ${escapeHtml(d.why_it_fits)}</p>
+      <p><strong>First money move:</strong> ${escapeHtml(d.first_money_move)}</p>
+      <p><strong>Honest risk:</strong> ${escapeHtml(d.honest_risk)}</p>
+    </div>
+  `).join('');
+
+  const noticed = (report.section_2_what_we_noticed || []).map(n => `<li>${escapeHtml(n)}</li>`).join('');
+
+  document.getElementById('app').innerHTML = `
+    <div class="report-wrap">
+      <div class="report-head">
+        <h1 class="serif">Your Sellable Opportunity — Draft</h1>
+        <div class="mono">${escapeHtml(report.reference)}</div>
+      </div>
+      <div class="report-body">
+        <h2>What you told us</h2>
+        <p><strong>Situation:</strong> ${escapeHtml(report.section_1_what_you_told_us.situation)}</p>
+        <p><strong>Goal:</strong> ${escapeHtml(report.section_1_what_you_told_us.goal)}</p>
+        <p><strong>Constraint:</strong> ${escapeHtml(report.section_1_what_you_told_us.constraint)}</p>
+
+        <h2>What we noticed</h2>
+        <ul>${noticed}</ul>
+
+        <h2>Possible directions</h2>
+        ${directions}
+
+        <h2>Provisional leaning</h2>
+        <p>${escapeHtml(report.draft_recommendation)}</p>
+      </div>
+    </div>
+    ${sendControlsHtml()}
+    <div style="margin-top:20px;">
+      <a class="btn btn-primary" href="/refine.html">Continue to React &amp; Refine</a>
+    </div>
+  `;
+
+  wireSendControls(report);
+}
+
+function renderFinal(report){
+  const s4 = report.section_4_reaction_refined || {};
+  const s5 = report.section_5_sellable_opportunity || {};
+  const s6 = report.section_6_first_money_plan || {};
+  const s7 = report.section_7_what_could_go_wrong || {};
+
+  document.getElementById('app').innerHTML = `
+    <div class="report-wrap">
+      <div class="report-head">
+        <h1 class="serif">Your Sellable Opportunity — Final</h1>
+        <div class="mono">${escapeHtml(report.reference)}</div>
+      </div>
+      <div class="report-body">
+        <h2>Your reactions</h2>
+        <p><strong>Yes:</strong> ${escapeHtml((s4.yes || []).join(', ') || '\u2014')}</p>
+        <p><strong>Maybe:</strong> ${escapeHtml((s4.maybe || []).join(', ') || '\u2014')}</p>
+        <p><strong>No:</strong> ${escapeHtml((s4.no || []).join(', ') || '\u2014')}</p>
+        <p>${escapeHtml(s4.how_reaction_changed_recommendation)}</p>
+
+        <h2>Your sellable opportunity</h2>
+        <div class="direction-card">
+          <h3>${escapeHtml(s5.name)}</h3>
+          <p>${escapeHtml(s5.one_sentence)}</p>
+          <p><strong>Who pays:</strong> ${escapeHtml(s5.who_pays)}</p>
+          <p><strong>What they pay for:</strong> ${escapeHtml(s5.what_they_pay_for)}</p>
+          <p><strong>Why you:</strong> ${escapeHtml(s5.why_you)}</p>
+        </div>
+
+        <h2>First-money plan</h2>
+        <p><strong>This week:</strong> ${escapeHtml(s6.step_1_this_week)}</p>
+        <p><strong>Next week:</strong> ${escapeHtml(s6.step_2_next_week)}</p>
+        <p><strong>Within 30 days:</strong> ${escapeHtml(s6.step_3_within_30_days)}</p>
+        <p><strong>What first money looks like:</strong> ${escapeHtml(s6.what_first_money_looks_like)}</p>
+
+        <h2>What could go wrong</h2>
+        <p>${escapeHtml(s7.reason)}</p>
+        <p><strong>Adjustment:</strong> ${escapeHtml(s7.adjustment)}</p>
+
+        <h2>Next action</h2>
+        <p>${escapeHtml(report.section_8_next_action)}</p>
+      </div>
+    </div>
+    ${sendControlsHtml()}
+  `;
+
+  wireSendControls(report);
+}
+
+function sendControlsHtml(){
+  return `
+    <div class="folder" style="margin-top:20px;">
+      <div id="send-status" class="note" style="display:none;margin-bottom:12px;"></div>
+      <button class="btn btn-primary" id="send-reviewer-btn">Send to me for review</button>
+
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--panel-line);">
+        <div id="unlock-row">
+          <label style="display:block;font-size:13px;color:var(--ink-dim);margin-bottom:6px;">Reviewer passcode to unlock customer send</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="passcode-input" placeholder="Enter passcode" style="max-width:200px;">
+            <button class="btn btn-ghost" id="unlock-btn">Unlock</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="send-customer-btn" style="display:none;margin-top:12px;">Send to customer</button>
+      </div>
+    </div>
+  `;
+}
+
+function wireSendControls(report){
+  const statusEl = document.getElementById('send-status');
+
+  function showStatus(msg, isError){
+    statusEl.style.display = 'block';
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#E8946E' : '#8FBFAF';
+  }
+
+  async function send(recipient, btn){
+    btn.disabled = true;
+    showStatus('Sending\u2026', false);
+    try{
+      const response = await fetch('/.netlify/functions/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report, recipient })
+      });
+      const data = await response.json();
+      if(!response.ok || data.status !== 'ok'){
+        showStatus((data && data.message) || 'Could not send the email.', true);
+      }else{
+        showStatus(recipient === 'reviewer' ? 'Sent to your review inbox.' : 'Sent to the customer.', false);
+      }
+    }catch(err){
+      showStatus('Could not reach the server.', true);
+    }
+    btn.disabled = false;
+  }
+
+  document.getElementById('send-reviewer-btn').onclick = function(){
+    send('reviewer', this);
+  };
+
+  document.getElementById('unlock-btn').onclick = function(){
+    const val = document.getElementById('passcode-input').value;
+    if(val === REVIEWER_PASSCODE){
+      document.getElementById('unlock-row').style.display = 'none';
+      document.getElementById('send-customer-btn').style.display = 'inline-block';
+    }else{
+      showStatus('Incorrect passcode.', true);
+    }
+  };
+
+  document.getElementById('send-customer-btn').onclick = function(){
+    send('customer', this);
+  };
+}
+
+// --- Entry point ---
+const errorMsg = sessionStorage.getItem('ac_report_error');
+if(errorMsg){
+  sessionStorage.removeItem('ac_report_error');
+  renderError(errorMsg);
+}else{
+  const raw = sessionStorage.getItem('ac_current_report');
+  if(!raw){
+    renderNoReport();
+  }else{
+    let report;
+    try{
+      report = JSON.parse(raw);
+    }catch(e){
+      renderError('Your saved report could not be read.');
+      report = null;
+    }
+    if(report){
+      if(report.status === 'error'){
+        renderError(report.message);
+      }else if(report.section_5_sellable_opportunity){
+        renderFinal(report);
+      }else if(report.section_3_directions){
+        renderDraft(report);
+      }else{
+        renderError('This report is missing expected data.');
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>

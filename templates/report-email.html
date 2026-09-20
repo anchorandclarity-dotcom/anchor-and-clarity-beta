@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Your Sellable Opportunity</title>
+<style>
+  body{margin:0;padding:0;background:#F4F1EA;font-family:Georgia,'Times New Roman',serif;color:#221F1A;}
+  .wrap{max-width:600px;margin:0 auto;padding:32px 20px;}
+  .card{background:#FFFFFF;border:1px solid #E0DACB;border-radius:6px;padding:30px 26px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .ref{font-family:'Courier New',monospace;font-size:11px;color:#6B6659;letter-spacing:.02em;margin-bottom:22px;}
+  h2{font-size:15px;font-weight:600;margin:26px 0 8px;padding-bottom:5px;border-bottom:1px solid #E0DACB;}
+  h2:first-of-type{margin-top:0;}
+  p,li{font-size:14px;line-height:1.65;color:#2E2A24;margin:0 0 8px;}
+  ul{margin:0 0 10px;padding-left:20px;}
+  .direction{background:#F7F4EC;border:1px solid #E0DACB;border-radius:5px;padding:14px 16px;margin-bottom:12px;}
+  .direction h3{font-size:14px;margin:0 0 8px;}
+  .footer{font-size:11px;color:#9CA2A8;text-align:center;margin-top:22px;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>{{CUSTOMER_NAME}} — Your Sellable Opportunity</h1>
+      <div class="ref">REFERENCE: {{REFERENCE}}</div>
+      {{REPORT_BODY}}
+    </div>
+    <div class="footer">Anchor &amp; Clarity — Find Your Sellable Opportunity</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+A customer has completed the Discovery step. Analyse their answers and return the structured JSON report.
+
+Reference: {{reference}}
+Customer name: {{customer_name}}
+
+Situation:
+{{situation}}
+
+Goal:
+{{goal}}
+
+Constraint:
+{{constraint}}

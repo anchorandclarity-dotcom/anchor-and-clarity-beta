@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Discovery — Anchor &amp; Clarity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="shell" id="app"></div>
+
+<script>
+const FIELDS = [
+  { key: 'situation', label: 'Your situation', hint: 'What does your current work or earning situation actually look like right now?', type: 'textarea' },
+  { key: 'goal', label: 'Your 90-day goal', hint: 'What would "this worked" look like for you in 90 days? Be concrete.', type: 'textarea' },
+  { key: 'constraint', label: 'Your constraint', hint: 'What\u2019s the one thing most likely to stop you \u2014 time, money, confidence, something else?', type: 'textarea' }
+];
+
+function renderForm(){
+  const fields = FIELDS.map(f => `
+    <div class="exhibit">
+      <span class="exhibit-label">${f.label.toUpperCase()}</span>
+      <div class="hint" style="margin-bottom:10px;">${f.hint}</div>
+      <textarea data-key="${f.key}" placeholder="Write a few sentences \u2014 be specific."></textarea>
+    </div>
+  `).join('');
+
+  document.getElementById('app').innerHTML = `
+    <span class="tab mono">CASE FILE \u00b7 DISCOVERY</span>
+    <div class="folder">
+      <h1>Three honest questions</h1>
+      <div class="sub">No niche required. Just tell us what's true.</div>
+
+      <div class="field">
+        <label for="customer_name">Your name</label>
+        <input type="text" id="customer_name" placeholder="Full name">
+      </div>
+      <div class="field">
+        <label for="customer_email">Your email</label>
+        <input type="email" id="customer_email" placeholder="you@example.com">
+        <div class="hint">This is where your final report will be sent.</div>
+      </div>
+
+      ${fields}
+
+      <div id="error-msg" style="display:none;color:#E8B7A4;font-size:13.5px;margin-bottom:14px;"></div>
+
+      <button class="btn btn-primary" id="submit-btn">Get my directions</button>
+      <p class="note">This takes about a minute to answer, and a little longer for us to think it through.</p>
+    </div>
+  `;
+
+  document.getElementById('submit-btn').onclick = handleSubmit;
+}
+
+function renderLoading(){
+  document.getElementById('app').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="mono">READING YOUR ANSWERS\u2026</div>
+    </div>
+  `;
+}
+
+async function handleSubmit(){
+  const customer_name = document.getElementById('customer_name').value.trim();
+  const customer_email = document.getElementById('customer_email').value.trim();
+  const answers = {};
+  document.querySelectorAll('textarea[data-key]').forEach(ta => {
+    answers[ta.dataset.key] = ta.value.trim();
+  });
+
+  const errorEl = document.getElementById('error-msg');
+  if(!customer_name || !customer_email || !answers.situation || !answers.goal || !answers.constraint){
+    errorEl.textContent = 'Please fill in your name, email, and all three questions before continuing.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  renderLoading();
+
+  try{
+    const response = await fetch('/.netlify/functions/generate-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name,
+        customer_email,
+        situation: answers.situation,
+        goal: answers.goal,
+        constraint: answers.constraint
+      })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok || data.status === 'error'){
+      sessionStorage.setItem('ac_report_error', data.message || 'Something went wrong generating your report.');
+      window.location.href = '/report.html';
+      return;
+    }
+
+    sessionStorage.setItem('ac_current_report', JSON.stringify(data));
+    window.location.href = '/report.html';
+  }catch(err){
+    sessionStorage.setItem('ac_report_error', 'Could not reach the server. Please try again.');
+    window.location.href = '/report.html';
+  }
+}
+
+renderForm();
+</script>
+</body>
+</html>
