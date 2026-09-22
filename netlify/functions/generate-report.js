@@ -1,3 +1,4 @@
+
 // generate-report.js
 //
 // Takes the customer's Discovery answers, fills the generate-user prompt
@@ -99,7 +100,7 @@ exports.handler = async function (event) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       })
