@@ -92,7 +92,7 @@ exports.handler = async function (event) {
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 2000,
-        temperature: 0.4,
+        
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -134,7 +134,7 @@ exports.handler = async function (event) {
   if (parsed.status === 'error') {
     return { statusCode: 200, body: JSON.stringify(parsed) };
   }
-
+  // Remove deprecated temperature param
   // Carry the email and a confirmed reference through to the front end so
   // report.html and send-report.js have what they need downstream. The
   // model was never asked for customer_email, so we attach it here.
