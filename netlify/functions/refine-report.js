@@ -85,7 +85,7 @@ exports.handler = async function (event) {
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 2000,
-        temperature: 0.4,
+        
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -127,7 +127,7 @@ exports.handler = async function (event) {
   if (parsed.status === 'error') {
     return { statusCode: 200, body: JSON.stringify(parsed) };
   }
-
+  // 'Remove deprecated temperature param'
   // The refine-system output structure doesn't include customer_name or
   // customer_email, but report.html and send-report.js need them. Carry
   // them through from the request.
