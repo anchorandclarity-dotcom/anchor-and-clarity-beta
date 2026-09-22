@@ -27,6 +27,14 @@ function fillTemplate(template, vars) {
   });
 }
 
+// Models sometimes wrap JSON in markdown code fences or add stray
+// whitespace even when told not to. Strip that defensively before parsing.
+function extractJSON(text) {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  return cleaned;
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return {
@@ -85,7 +93,6 @@ exports.handler = async function (event) {
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 2000,
-        
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -116,18 +123,21 @@ exports.handler = async function (event) {
 
   let parsed;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(extractJSON(text));
   } catch (e) {
     return {
       statusCode: 200,
-      body: JSON.stringify({ status: 'error', message: 'Could not parse the model response as JSON.' })
+      body: JSON.stringify({
+        status: 'error',
+        message: 'Could not parse the model response as JSON. Raw start: ' + text.slice(0, 300)
+      })
     };
   }
 
   if (parsed.status === 'error') {
     return { statusCode: 200, body: JSON.stringify(parsed) };
   }
-  // 'Remove deprecated temperature param'
+
   // The refine-system output structure doesn't include customer_name or
   // customer_email, but report.html and send-report.js need them. Carry
   // them through from the request.
