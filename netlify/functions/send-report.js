@@ -196,12 +196,7 @@ exports.handler = async function (event) {
         Authorization: `Bearer ${resendKey}`
       },
       body: JSON.stringify({
-        // Using Resend's test address for now — this only delivers to the
-        // email you used to sign up for Resend. Once you verify your own
-        // domain at resend.com/domains, change this to something like
-        // 'Anchor & Clarity <reports@yourdomain.com>' so it can send to
-        // any customer, not just your own inbox.
-        from: 'Anchor & Clarity <onboarding@resend.dev>',
+        from: 'Anchor & Clarity <reports@anchorandclarity.com>',
         to: [toAddress],
         subject,
         html
